@@ -1,4 +1,4 @@
-from flask import Flask, request, send_file, Response, jsonify
+from flask import Flask, request, jsonify
 import cv2
 import pickle
 import os
@@ -53,15 +53,12 @@ def predict():
         if percentual >=15:
             cv2.rectangle(gabarito, (x, y), (x + w, y + h), (255, 0, 0), 2)
             respostas.append(resp[id])
-    erros = 0
     acertos = 0
     if len(respostas)==len(correct_answer):
         for num,res in enumerate(respostas):
             if res == correct_answer[num]:
                 acertos +=1
-            else:
-                erros +=1
-    return jsonify({'acertos': acertos, 'erros': erros})
+    return jsonify({'respostas': respostas, 'acertos': acertos})
     
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
