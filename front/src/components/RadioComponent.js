@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 
 const RadioButton = ({ questionNumber, selectedColor, emoji, textColor, onSelect }) => {
   const [selectedOption, setSelectedOption] = useState(null);
@@ -42,12 +42,12 @@ const RadioButton = ({ questionNumber, selectedColor, emoji, textColor, onSelect
     <View style={styles.questionContainer}>
       {emoji && (
         <View style={styles.checkContainer}>
-          <Text style={styles.checkText}>{emoji}</Text>
+          <Image source={emoji} />
         </View>
       )}
       <Text
         style={[styles.questionText, { color: textColor }]}
-      >{`Q${questionNumber}.`}</Text>
+      >{`${questionNumber}.`}</Text>
       <View style={styles.checkboxContainer}>{renderOptions()}</View>
     </View>
   );
@@ -60,24 +60,22 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   checkContainer: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    borderWidth: 2,
+    width: 15,
+    height: 15,
     borderColor: '#000000',
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: 10,
-    marginRight: 10,
+    marginBottom: 9,
+    marginLeft: -5,
+    marginRight: 9,
   },
   checkText: {
     fontWeight: 'bold',
-    fontSize: 20,
+    fontSize: 11,
   },
   checkboxContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginLeft: 5,
   },
   checkbox: {
     width: 40,
@@ -93,7 +91,6 @@ const styles = StyleSheet.create({
   questionText: {
     fontSize: 20,
     marginLeft: 5,
-    marginRight: 5,
     width: 45,
     paddingBottom: 10,
   },

@@ -69,7 +69,6 @@ export default function Home() {
           {/* View do conteúdo central */}
           <View style={styles.centralBody}>
             <View style={styles.questionsContainer}>
-              {/* Renderização dos componentes de rádio */}
               {[...Array(10).keys()].map((_, index) => (
                 <RadioComponent
                   key={index}
@@ -142,7 +141,6 @@ const styles = StyleSheet.create({
     borderColor: '#CADBE1',
     borderRadius: 10,
     padding: 20,
-    paddingTop: 20,
   },
   addImageContainer: {
     marginTop: 20,
