@@ -1,69 +1,73 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   Image,
-  Dimensions,
   ScrollView,
   TouchableOpacity,
-  Alert,
   Modal,
+  Alert,
   ActivityIndicator,
 } from 'react-native';
-
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
-
 import RadioComponent from '../components/RadioComponent';
-import logo from '../assets/logo.png';
+import checkEmoji from '../assets/check.png';
+import wrongEmoji from '../assets/x.png';
 import loanding2 from '../assets/loanding2.png';
-import { useFonts, NunitoSans_400Regular } from '@expo-google-fonts/nunito-sans';
-
+import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 
-export default function Home() {
-  let [fontsLoaded] = useFonts({ NunitoSans_400Regular });
-  const [selectedOptions, setSelectedOptions] = useState(Array(10).fill(null));
+export default function ResultPage({ route }) {
+  const { resultData } = route.params;
+  const [correctAnswers, setCorrectAnswers] = useState([]);
+  const [totalCorrect, setTotalCorrect] = useState(0);
   const [modalVisible, setModalVisible] = useState(false);
-  const [image, setImage] = useState(null);
   const [loading, setLoading] = useState(false);
   const navigation = useNavigation();
 
-  useFocusEffect(
-    React.useCallback(() => {
-      setSelectedOptions(Array(10).fill(null));
-      setImage(null);
-      setLoading(false);
-    }, [])
-  );
+  useEffect(() => {
+    const fetchCorrectAnswers = async () => {
+      try {
+        const storedAnswers = await AsyncStorage.getItem('correct_answer');
+        if (storedAnswers) {
+          const parsedAnswers = JSON.parse(storedAnswers);
+          setCorrectAnswers(parsedAnswers);
+          calculateTotalCorrect(parsedAnswers, resultData.respostas);
+        }
+      } catch (error) {
+        console.error('Failed to fetch correct answers:', error);
+      }
+    };
 
-  if (!fontsLoaded) {
-    return (
-      <ActivityIndicator
-        size="large"
-        color="#0000ff"
-      />
-    );
-  }
+    fetchCorrectAnswers();
+  }, []);
+
+  const calculateTotalCorrect = (storedAnswers, apiAnswers) => {
+    let correctCount = 0;
+    storedAnswers.forEach((answer, index) => {
+      if (answer === apiAnswers[index]) {
+        correctCount++;
+      }
+    });
+    setTotalCorrect(correctCount);
+  };
+
+  const getOptionIndex = (option) => {
+    return option ? option.split('-')[1].charCodeAt(0) - 65 : null;
+  };
 
   const handleAddImage = () => {
-    if (selectedOptions.includes(null)) {
-      Alert.alert('Atenção', 'Por favor, marque todas as respostas do gabarito oficial.');
-      return;
-    }
-
     setModalVisible(true);
   };
 
-  const handleSelectOption = (index, optionIndex) => {
-    let updatedOptions = [...selectedOptions];
-    if (updatedOptions[index] === optionIndex) {
-      updatedOptions[index] = null;
-    } else {
-      updatedOptions[index] = `${index + 1}-${String.fromCharCode(65 + optionIndex)}`;
+  const handleGoHome = async () => {
+    try {
+      await AsyncStorage.removeItem('correct_answer');
+      navigation.navigate('Home');
+    } catch (error) {
+      console.error('Failed to clear AsyncStorage:', error);
     }
-    setSelectedOptions(updatedOptions);
   };
 
   const uploadImage = async (mode) => {
@@ -91,7 +95,7 @@ export default function Home() {
       }
 
       if (!result.canceled) {
-        setLoading(true); // Show loading spinner
+        setLoading(true);
         await sendFormData(result.assets[0].uri);
       }
     } catch (erro) {
@@ -101,13 +105,7 @@ export default function Home() {
   };
 
   const sendFormData = async (imageUri) => {
-    // Verifica se todas as opções foram marcadas
-    if (selectedOptions.includes(null)) {
-      Alert.alert('Atenção', 'Por favor, marque todas as respostas do gabarito oficial.');
-      return;
-    }
-
-    const formattedOptions = selectedOptions.map(
+    const formattedOptions = correctAnswers.map(
       (option, index) => option || `${index + 1}-A`
     );
     await AsyncStorage.setItem('correct_answer', JSON.stringify(formattedOptions));
@@ -150,63 +148,80 @@ export default function Home() {
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.mainContent}>
-          {/* View da imagem */}
           <View style={styles.imageContainer}>
             <Image
-              source={logo}
+              source={require('../assets/logo.png')}
               style={styles.image}
             />
             <View style={styles.textContainer}>
               <Text style={styles.title}>
-                Marque as respostas do {'\n'}
+                Resultado da avalação:
                 <Text
                   style={{
                     fontFamily: 'NunitoSans_400Regular',
                     fontWeight: 'bold',
                     color: '#395F6F',
                   }}
-                >
-                  gabarito oficial:
-                </Text>
+                ></Text>
               </Text>
             </View>
           </View>
+          <View style={styles.resultContainer}>
+            <Text style={styles.resultText}>O total de acertos foi:</Text>
+            <View style={{ flexDirection: 'row' }}>
+              <Text style={styles.resultScore}>{totalCorrect}</Text>
+              <Text style={styles.totalQuestions}>/{resultData.respostas.length}</Text>
+            </View>
+          </View>
+          <View style={styles.questionsContainer}>
+            {resultData.respostas.map((option, index) => {
+              const storedOption = correctAnswers[index];
+              const isCorrect = storedOption === option;
+              const selectedColor = isCorrect ? '#A3CB38' : '#EA2027';
+              const correctColor = '#7A949F';
+              const emoji = isCorrect ? checkEmoji : wrongEmoji;
+              const initialSelectedOption = getOptionIndex(storedOption);
+              const correctOption = getOptionIndex(option);
 
-          {/* View do conteúdo central */}
-          <View style={styles.centralBody}>
-            <View style={styles.questionsContainer}>
-              {[...Array(10).keys()].map((_, index) => (
+              return (
                 <RadioComponent
                   key={index}
                   questionNumber={index + 1}
-                  selectedColor="#0067B3"
-                  emoji={null}
+                  selectedColor={selectedColor}
+                  correctColor={correctColor}
+                  emoji={emoji}
                   textColor="#395F6F"
-                  onSelect={(optionIndex) => handleSelectOption(index, optionIndex)}
+                  initialSelectedOption={initialSelectedOption}
+                  correctOption={correctOption}
+                  onSelect={() => {}}
+                  disableSelection={true}
                 />
-              ))}
-            </View>
+              );
+            })}
           </View>
-
-          {/* View para adicionar imagem e enviar */}
-          <View style={styles.addImageContainer}>
-            <Text style={styles.addImageText}>Envie sua folha de respostas</Text>
+          <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={styles.addButton}
               onPress={handleAddImage}
             >
-              <Text style={styles.addButtonLabel}>Adicionar imagem</Text>
+              <Text style={styles.addButtonLabel}>Enviar outra folha de respostas</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.goHomeButton}
+              onPress={handleGoHome}
+            >
+              <Text style={styles.goHomeButtonLabel}>Voltar à tela inicial</Text>
             </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
 
-      {/* Modal para selecionar imagem */}
       <Modal
         animationType="none"
         transparent={true}
         visible={modalVisible}
         onRequestClose={() => {
+          Alert.alert('Modal has been closed.');
           setModalVisible(!modalVisible);
         }}
       >
@@ -239,7 +254,6 @@ export default function Home() {
         </View>
       </Modal>
 
-      {/* Loading spinner */}
       {loading && (
         <View style={styles.loadingContainer}>
           <ActivityIndicator
@@ -248,7 +262,7 @@ export default function Home() {
           />
           <Image
             source={loanding2}
-            style={styles.loadingLogo}
+            style={styles.loadingImage}
           />
         </View>
       )}
@@ -256,15 +270,17 @@ export default function Home() {
   );
 }
 
-const { height, width } = Dimensions.get('window');
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
   },
+  scrollContainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
+  },
   mainContent: {
-    width: width * 0.85,
+    width: '88%',
     alignSelf: 'center',
     marginTop: 20,
   },
@@ -287,12 +303,28 @@ const styles = StyleSheet.create({
     color: '#395F6F',
     paddingBottom: 2,
   },
-  centralBody: {
-    marginTop: 1,
+  resultContainer: {
+    borderWidth: 1,
+    borderColor: '#CADBE1',
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 20,
+    alignItems: 'center',
   },
-  scrollContainer: {
-    flexGrow: 1,
-    justifyContent: 'center',
+  resultText: {
+    fontSize: 18,
+    color: '#395F6F',
+  },
+  resultScore: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#395F6F',
+  },
+  totalQuestions: {
+    fontSize: 16,
+    color: '#395F6F',
+    paddingTop: 15,
+    paddingLeft: 2,
   },
   questionsContainer: {
     borderWidth: 1,
@@ -300,17 +332,14 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingTop: 10,
   },
-  addImageContainer: {
+  buttonContainer: {
     marginTop: 20,
     alignItems: 'center',
   },
-  addImageText: {
-    fontSize: 18,
-    color: '#395F6F',
-    marginBottom: 10,
-  },
   addButton: {
-    backgroundColor: '#f47721',
+    backgroundColor: '#fff',
+    borderColor: '#395F6F',
+    borderWidth: 1,
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 5,
@@ -321,6 +350,22 @@ const styles = StyleSheet.create({
     height: 50,
   },
   addButtonLabel: {
+    color: '#395F6F',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  goHomeButton: {
+    backgroundColor: '#f47721',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    marginBottom: 20,
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 50,
+  },
+  goHomeButtonLabel: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
@@ -376,7 +421,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#fff',
   },
-  loadingLogo: {
+  loadingImage: {
     width: 168,
     height: 47,
     marginTop: 20,

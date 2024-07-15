@@ -1,10 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 
-const RadioButton = ({ questionNumber, selectedColor, emoji, textColor, onSelect }) => {
-  const [selectedOption, setSelectedOption] = useState(null);
+const RadioButton = ({
+  questionNumber,
+  selectedColor,
+  correctColor,
+  emoji,
+  textColor,
+  onSelect,
+  initialSelectedOption,
+  correctOption,
+  disableSelection, // Add this line
+}) => {
+  const [selectedOption, setSelectedOption] = useState(initialSelectedOption);
+
+  useEffect(() => {
+    setSelectedOption(initialSelectedOption);
+  }, [initialSelectedOption]);
 
   const handleSelectOption = (optionIndex) => {
+    if (disableSelection) return; // Add this line to disable selection
+
     if (selectedOption === optionIndex) {
       setSelectedOption(null);
       onSelect(null);
@@ -17,25 +33,34 @@ const RadioButton = ({ questionNumber, selectedColor, emoji, textColor, onSelect
   const renderOptions = () => {
     const options = ['A', 'B', 'C', 'D', 'E'];
 
-    return options.map((option, index) => (
-      <TouchableOpacity
-        key={index}
-        style={[
-          styles.checkbox,
-          selectedOption === index && { backgroundColor: selectedColor, borderWidth: 0 },
-        ]}
-        onPress={() => handleSelectOption(index)}
-      >
-        <Text
-          style={{
-            color: selectedOption === index ? '#FFFFFF' : textColor,
-            fontSize: 20,
-          }}
+    return options.map((option, index) => {
+      let backgroundColor = null;
+      if (selectedOption === index) {
+        backgroundColor = selectedColor;
+      } else if (correctOption === index) {
+        backgroundColor = correctColor;
+      }
+
+      return (
+        <TouchableOpacity
+          key={index}
+          style={[
+            styles.checkbox,
+            backgroundColor && { backgroundColor, borderWidth: 0 },
+          ]}
+          onPress={() => handleSelectOption(index)}
         >
-          {option}
-        </Text>
-      </TouchableOpacity>
-    ));
+          <Text
+            style={{
+              color: backgroundColor ? '#FFFFFF' : textColor,
+              fontSize: 20,
+            }}
+          >
+            {option}
+          </Text>
+        </TouchableOpacity>
+      );
+    });
   };
 
   return (
@@ -69,8 +94,6 @@ const styles = StyleSheet.create({
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 9,
-    marginRight: 9,
   },
   questionContent: {
     flexDirection: 'row',
@@ -79,15 +102,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   numberContainer: {
-    width: 50, // Largura fixa para acomodar números de dois dígitos
+    width: 45,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingRight: 15,
+    marginLeft: -10,
   },
   checkboxContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
+    alignItems: 'center',
   },
   checkbox: {
     width: 40,
