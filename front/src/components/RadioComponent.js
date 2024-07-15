@@ -45,10 +45,14 @@ const RadioButton = ({ questionNumber, selectedColor, emoji, textColor, onSelect
           <Image source={emoji} />
         </View>
       )}
-      <Text
-        style={[styles.questionText, { color: textColor }]}
-      >{`${questionNumber}.`}</Text>
-      <View style={styles.checkboxContainer}>{renderOptions()}</View>
+      <View style={styles.questionContent}>
+        <View style={styles.numberContainer}>
+          <Text
+            style={[styles.questionText, { color: textColor }]}
+          >{`${questionNumber}.`}</Text>
+        </View>
+        <View style={styles.checkboxContainer}>{renderOptions()}</View>
+      </View>
     </View>
   );
 };
@@ -58,24 +62,32 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
+    justifyContent: 'center',
   },
   checkContainer: {
-    width: 15,
-    height: 15,
-    borderColor: '#000000',
+    width: 40,
+    height: 40,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 9,
-    marginLeft: -5,
     marginRight: 9,
   },
-  checkText: {
-    fontWeight: 'bold',
-    fontSize: 11,
+  questionContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flex: 1,
+  },
+  numberContainer: {
+    width: 50, // Largura fixa para acomodar números de dois dígitos
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingRight: 15,
   },
   checkboxContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    justifyContent: 'center',
   },
   checkbox: {
     width: 40,
@@ -90,9 +102,6 @@ const styles = StyleSheet.create({
   },
   questionText: {
     fontSize: 20,
-    marginLeft: 5,
-    width: 45,
-    paddingBottom: 10,
   },
 });
 

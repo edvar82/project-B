@@ -8,6 +8,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  Modal,
 } from 'react-native';
 import RadioComponent from '../components/RadioComponent';
 import logo from '../assets/logo.png';
@@ -106,7 +107,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   mainContent: {
-    width: width * 0.9,
+    width: width * 0.85,
     alignSelf: 'center',
     marginTop: 20,
   },
@@ -130,7 +131,7 @@ const styles = StyleSheet.create({
     paddingBottom: 2,
   },
   centralBody: {
-    marginTop: 10,
+    marginTop: 1,
   },
   scrollContainer: {
     flexGrow: 1,
@@ -140,7 +141,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#CADBE1',
     borderRadius: 10,
-    padding: 20,
+    paddingTop: 10,
   },
   addImageContainer: {
     marginTop: 20,
