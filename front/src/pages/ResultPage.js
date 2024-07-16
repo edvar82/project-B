@@ -155,7 +155,7 @@ export default function ResultPage({ route }) {
             />
             <View style={styles.textContainer}>
               <Text style={styles.title}>
-                Resultado da avalação:
+                Resultado da avaliação:
                 <Text
                   style={{
                     fontFamily: 'NunitoSans_400Regular',

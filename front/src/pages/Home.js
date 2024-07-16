@@ -42,7 +42,7 @@ export default function Home() {
     return (
       <ActivityIndicator
         size="large"
-        color="#0000ff"
+        color="#CADBE1"
       />
     );
   }
@@ -244,7 +244,7 @@ export default function Home() {
         <View style={styles.loadingContainer}>
           <ActivityIndicator
             size="large"
-            color="#0000ff"
+            color="#CADBE1"
           />
           <Image
             source={loanding2}
