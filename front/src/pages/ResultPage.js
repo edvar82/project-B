@@ -104,7 +104,7 @@ export default function ResultPage({ route }) {
     formData.append('correct_answer', JSON.stringify(formattedOptions));
 
     try {
-      const response = await fetch('http://192.168.169.227:5000/answer', {
+      const response = await fetch('https://project-b-h50c.onrender.com/answer', {
         method: 'POST',
         body: formData,
         headers: {
