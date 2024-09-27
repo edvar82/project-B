@@ -11,17 +11,14 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import RadioComponent from '../components/RadioComponent';
-import checkEmoji from '../assets/check.png';
-import wrongEmoji from '../assets/x.png';
 import loanding2 from '../assets/loanding2.png';
 import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 
 export default function ResultPage({ route }) {
   const { resultData } = route.params;
+  const [images, setImages] = useState([]);
   const [correctAnswers, setCorrectAnswers] = useState([]);
-  const [totalCorrect, setTotalCorrect] = useState(0);
   const [modalVisible, setModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigation = useNavigation();
@@ -33,7 +30,6 @@ export default function ResultPage({ route }) {
         if (storedAnswers) {
           const parsedAnswers = JSON.parse(storedAnswers);
           setCorrectAnswers(parsedAnswers);
-          calculateTotalCorrect(parsedAnswers, resultData.respostas);
         }
       } catch (error) {
         console.error('Failed to fetch correct answers:', error);
@@ -42,20 +38,6 @@ export default function ResultPage({ route }) {
 
     fetchCorrectAnswers();
   }, []);
-
-  const calculateTotalCorrect = (storedAnswers, apiAnswers) => {
-    let correctCount = 0;
-    storedAnswers.forEach((answer, index) => {
-      if (answer === apiAnswers[index]) {
-        correctCount++;
-      }
-    });
-    setTotalCorrect(correctCount);
-  };
-
-  const getOptionIndex = (option) => {
-    return option ? option.split('-')[1].charCodeAt(0) - 65 : null;
-  };
 
   const handleAddImage = () => {
     setModalVisible(true);
@@ -79,7 +61,7 @@ export default function ResultPage({ route }) {
         await ImagePicker.requestMediaLibraryPermissionsAsync();
         result = await ImagePicker.launchImageLibraryAsync({
           mediaTypes: ImagePicker.MediaTypeOptions.Images,
-          allowsEditing: true,
+          allowsMultipleSelection: true,
           aspect: [1, 1],
           quality: 1,
         });
@@ -96,7 +78,9 @@ export default function ResultPage({ route }) {
 
       if (!result.canceled) {
         setLoading(true);
-        await sendFormData(result.assets[0].uri);
+        const selectedImages = result.assets.map((asset) => asset.uri);
+        setImages(selectedImages);
+        await sendFormData(selectedImages);
       }
     } catch (erro) {
       alert('ERRO uploadind Image: ' + erro.message);
@@ -104,21 +88,23 @@ export default function ResultPage({ route }) {
     }
   };
 
-  const sendFormData = async (imageUri) => {
+  const sendFormData = async (imageUris) => {
     const formattedOptions = correctAnswers.map(
       (option, index) => option || `${index + 1}-A`
     );
     await AsyncStorage.setItem('correct_answer', JSON.stringify(formattedOptions));
     const formData = new FormData();
-    formData.append('image', {
-      uri: imageUri,
-      name: 'epi.jpeg',
-      type: 'image/jpeg',
+    imageUris.forEach((uri, index) => {
+      formData.append('images', {
+        uri,
+        name: `image${index}.jpeg`,
+        type: 'image/jpeg',
+      });
     });
     formData.append('correct_answer', JSON.stringify(formattedOptions));
 
     try {
-      const response = await fetch('https://project-b-h50c.onrender.com/answer', {
+      const response = await fetch('http://192.168.169.227:5000/answer', {
         method: 'POST',
         body: formData,
         headers: {
@@ -167,37 +153,17 @@ export default function ResultPage({ route }) {
             </View>
           </View>
           <View style={styles.resultContainer}>
-            <Text style={styles.resultText}>O total de acertos foi:</Text>
-            <View style={{ flexDirection: 'row' }}>
-              <Text style={styles.resultScore}>{totalCorrect}</Text>
-              <Text style={styles.totalQuestions}>/{resultData.respostas.length}</Text>
-            </View>
-          </View>
-          <View style={styles.questionsContainer}>
-            {resultData.respostas.map((option, index) => {
-              const storedOption = correctAnswers[index];
-              const isCorrect = storedOption === option;
-              const selectedColor = isCorrect ? '#A3CB38' : '#EA2027';
-              const correctColor = '#7A949F';
-              const emoji = isCorrect ? checkEmoji : wrongEmoji;
-              const initialSelectedOption = getOptionIndex(storedOption);
-              const correctOption = getOptionIndex(option);
-
-              return (
-                <RadioComponent
-                  key={index}
-                  questionNumber={index + 1}
-                  selectedColor={selectedColor}
-                  correctColor={correctColor}
-                  emoji={emoji}
-                  textColor="#395F6F"
-                  initialSelectedOption={initialSelectedOption}
-                  correctOption={correctOption}
-                  onSelect={() => {}}
-                  disableSelection={true}
-                />
-              );
-            })}
+            {resultData.resultados.map((resultado, index) => (
+              <View
+                key={index}
+                style={styles.resultItem}
+              >
+                <Text style={styles.resultItemText}>
+                  Prova {index + 1}:{' '}
+                  <Text style={styles.boldText}>{resultado.acertos} acertos</Text>
+                </Text>
+              </View>
+            ))}
           </View>
           <View style={styles.buttonContainer}>
             <TouchableOpacity
@@ -309,28 +275,19 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 10,
     marginBottom: 20,
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
-  resultText: {
-    fontSize: 18,
-    color: '#395F6F',
+  resultItem: {
+    marginTop: 10,
+    marginBottom: 10,
   },
-  resultScore: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#395F6F',
-  },
-  totalQuestions: {
+  resultItemText: {
     fontSize: 16,
     color: '#395F6F',
-    paddingTop: 15,
-    paddingLeft: 2,
+    textAlign: 'left',
   },
-  questionsContainer: {
-    borderWidth: 1,
-    borderColor: '#CADBE1',
-    borderRadius: 10,
-    paddingTop: 10,
+  boldText: {
+    fontWeight: 'bold',
   },
   buttonContainer: {
     marginTop: 20,

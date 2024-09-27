@@ -26,14 +26,14 @@ export default function Home() {
   let [fontsLoaded] = useFonts({ NunitoSans_400Regular });
   const [selectedOptions, setSelectedOptions] = useState(Array(10).fill(null));
   const [modalVisible, setModalVisible] = useState(false);
-  const [image, setImage] = useState(null);
+  const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(false);
   const navigation = useNavigation();
 
   useFocusEffect(
     React.useCallback(() => {
-      setSelectedOptions(Array(10).fill(null));
-      setImage(null);
+      setSelectedOptions(Array(10).fill(null)); // Reset options to null
+      setImages([]);
       setLoading(false);
     }, [])
   );
@@ -75,7 +75,7 @@ export default function Home() {
         await ImagePicker.requestMediaLibraryPermissionsAsync();
         result = await ImagePicker.launchImageLibraryAsync({
           mediaTypes: ImagePicker.MediaTypeOptions.Images,
-          allowsEditing: true,
+          allowsMultipleSelection: true,
           aspect: [1, 1],
           quality: 1,
         });
@@ -91,8 +91,10 @@ export default function Home() {
       }
 
       if (!result.canceled) {
-        setLoading(true); // Show loading spinner
-        await sendFormData(result.assets[0].uri);
+        setLoading(true);
+        const selectedImages = result.assets.map((asset) => asset.uri);
+        setImages(selectedImages);
+        await sendFormData(selectedImages);
       }
     } catch (erro) {
       alert('ERRO uploadind Image: ' + erro.message);
@@ -100,8 +102,7 @@ export default function Home() {
     }
   };
 
-  const sendFormData = async (imageUri) => {
-    // Verifica se todas as opções foram marcadas
+  const sendFormData = async (imageUris) => {
     if (selectedOptions.includes(null)) {
       Alert.alert('Atenção', 'Por favor, marque todas as respostas do gabarito oficial.');
       return;
@@ -112,15 +113,17 @@ export default function Home() {
     );
     await AsyncStorage.setItem('correct_answer', JSON.stringify(formattedOptions));
     const formData = new FormData();
-    formData.append('image', {
-      uri: imageUri,
-      name: 'epi.jpeg',
-      type: 'image/jpeg',
+    imageUris.forEach((uri, index) => {
+      formData.append('images', {
+        uri,
+        name: `image${index}.jpeg`,
+        type: 'image/jpeg',
+      });
     });
     formData.append('correct_answer', JSON.stringify(formattedOptions));
 
     try {
-      const response = await fetch('https://project-b-h50c.onrender.com/answer', {
+      const response = await fetch('http://192.168.169.227:5000/answer', {
         method: 'POST',
         body: formData,
         headers: {
