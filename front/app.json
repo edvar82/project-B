@@ -4,7 +4,7 @@
     "slug": "Gabaritei",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/favicon3.png",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
@@ -17,9 +17,16 @@
       "**/*"
     ],
     "android": {
+      "adaptativeIcon": {
+        "foregroundImage": "./assets/adaptative-icon.png",
+        "backgroundColor": "#FFFFFF"
+      },
       "package": "com.seuusuario.meuapp",
       "versionCode": 1,
-      "permissions": []
+      "permissions": [],
+      "minSdkVersion": 21,
+      "targetSdkVersion": 33,
+      "compileSdkVersion": 33
     },
     "extra": {
       "eas": {
