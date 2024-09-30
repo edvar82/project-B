@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Gabaritei",
-    "slug": "Gabaritei",
+    "slug": "gabaritei",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/favicon3.png",
@@ -17,8 +17,8 @@
       "**/*"
     ],
     "android": {
-      "adaptativeIcon": {
-        "foregroundImage": "./assets/adaptative-icon.png",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/favicon3.png",
         "backgroundColor": "#FFFFFF"
       },
       "package": "com.seuusuario.meuapp",
@@ -30,7 +30,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "9a811275-b590-458c-92d8-e14e63aa0db3"
+        "projectId": "9776b1d3-9a75-4e86-aa08-eba106a37264"
       }
     }
   }
