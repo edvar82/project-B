@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 import cv2
 import pickle
 import os
@@ -20,12 +20,25 @@ with open(resp_path, 'rb') as arquivo:
 
 app = Flask(__name__)
 
-@app.route('/answer', methods=['POST'])
+@app.route('/answer', methods=['POST']) # type: ignore
 def predict():
     correct_answer = json.loads(request.form['correct_answer'])
-    files = request.files.getlist('images')  
+    files = request.files.getlist('images')
 
     respostas_imagens = []
+
+    def tratar_respostas(respostas):
+        questoes_dict = {str(i): 'F' for i in range(1, 11)}  
+        
+        for resposta in respostas:
+            numero_questao = resposta.split('-')[0]  
+            if questoes_dict[numero_questao] != 'F': 
+                questoes_dict[numero_questao] = 'F'
+            else:
+                questoes_dict[numero_questao] = resposta.split('-')[1]  
+        
+        respostas_tratadas = [f"{num}-{resp}" for num, resp in sorted(questoes_dict.items(), key=lambda x: int(x[0]))]
+        return respostas_tratadas
 
     for file in files:
         file_data = file.read()
@@ -34,6 +47,7 @@ def predict():
         image_np = np.array(image)
         imagem = cv2.resize(image_np, (600, 700))
 
+        # Extrai o gabarito
         gabarito, bbox = exG.extrairMaiorCtn(imagem)
         imgGray = cv2.cvtColor(gabarito, cv2.COLOR_BGR2GRAY)
         ret, imgTh = cv2.threshold(imgGray, 70, 255, cv2.THRESH_BINARY_INV)
@@ -61,15 +75,16 @@ def predict():
                 cv2.rectangle(gabarito, (x, y), (x + w, y + h), (255, 0, 0), 2)
                 respostas.append(resp[id])
 
+        respostas_tratadas = tratar_respostas(respostas)
+
         acertos = 0
-        if len(respostas) == len(correct_answer):
-            for num, res in enumerate(respostas):
+        if len(respostas_tratadas) == len(correct_answer):
+            for num, res in enumerate(respostas_tratadas):
                 if res == correct_answer[num]:
                     acertos += 1
 
         respostas_imagens.append({'respostas': respostas, 'acertos': acertos})
-
-    return jsonify({'resultados': respostas_imagens})
+        return jsonify(respostas_imagens)
 
 @app.route('/', methods=['GET'])
 def index():
