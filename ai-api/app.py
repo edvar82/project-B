@@ -47,7 +47,6 @@ def predict():
         image_np = np.array(image)
         imagem = cv2.resize(image_np, (600, 700))
 
-        # Extrai o gabarito
         gabarito, bbox = exG.extrairMaiorCtn(imagem)
         imgGray = cv2.cvtColor(gabarito, cv2.COLOR_BGR2GRAY)
         ret, imgTh = cv2.threshold(imgGray, 70, 255, cv2.THRESH_BINARY_INV)
@@ -84,7 +83,7 @@ def predict():
                     acertos += 1
 
         respostas_imagens.append({'respostas': respostas, 'acertos': acertos})
-        return jsonify(respostas_imagens)
+    return jsonify(respostas_imagens)
 
 @app.route('/', methods=['GET'])
 def index():
