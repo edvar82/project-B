@@ -83,7 +83,7 @@ def predict():
                     acertos += 1
 
         respostas_imagens.append({'respostas': respostas, 'acertos': acertos})
-    return jsonify(respostas_imagens)
+    return jsonify({'resultados': respostas_imagens})
 
 @app.route('/', methods=['GET'])
 def index():
