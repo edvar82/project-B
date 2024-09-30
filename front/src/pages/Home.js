@@ -32,7 +32,7 @@ export default function Home() {
 
   useFocusEffect(
     React.useCallback(() => {
-      setSelectedOptions(Array(10).fill(null)); // Reset options to null
+      setSelectedOptions(Array(10).fill(null));
       setImages([]);
       setLoading(false);
     }, [])
@@ -61,7 +61,7 @@ export default function Home() {
     if (updatedOptions[index] === optionIndex) {
       updatedOptions[index] = null;
     } else {
-      updatedOptions[index] = `${index + 1}-${String.fromCharCode(65 + optionIndex)}`;
+      updatedOptions[index] = optionIndex;
     }
     setSelectedOptions(updatedOptions);
   };
@@ -108,8 +108,10 @@ export default function Home() {
       return;
     }
 
-    const formattedOptions = selectedOptions.map(
-      (option, index) => option || `${index + 1}-A`
+    const formattedOptions = selectedOptions.map((option, index) =>
+      option !== null
+        ? `${index + 1}-${String.fromCharCode(65 + option)}`
+        : `${index + 1}-A`
     );
     await AsyncStorage.setItem('correct_answer', JSON.stringify(formattedOptions));
     const formData = new FormData();
@@ -186,6 +188,7 @@ export default function Home() {
                   emoji={null}
                   textColor="#395F6F"
                   onSelect={(optionIndex) => handleSelectOption(index, optionIndex)}
+                  initialSelectedOption={selectedOptions[index]} // Add this line
                 />
               ))}
             </View>

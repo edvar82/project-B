@@ -10,7 +10,7 @@ const RadioButton = ({
   onSelect,
   initialSelectedOption,
   correctOption,
-  disableSelection, // Add this line
+  disableSelection,
 }) => {
   const [selectedOption, setSelectedOption] = useState(initialSelectedOption);
 
@@ -19,15 +19,11 @@ const RadioButton = ({
   }, [initialSelectedOption]);
 
   const handleSelectOption = (optionIndex) => {
-    if (disableSelection) return; // Add this line to disable selection
+    if (disableSelection) return;
 
-    if (selectedOption === optionIndex) {
-      setSelectedOption(null);
-      onSelect(null);
-    } else {
-      setSelectedOption(optionIndex);
-      onSelect(optionIndex);
-    }
+    const newSelectedOption = selectedOption === optionIndex ? null : optionIndex;
+    setSelectedOption(newSelectedOption);
+    onSelect(newSelectedOption);
   };
 
   const renderOptions = () => {
@@ -37,7 +33,7 @@ const RadioButton = ({
       let backgroundColor = null;
       if (selectedOption === index) {
         backgroundColor = selectedColor;
-      } else if (correctOption === index) {
+      } else if (correctOption === index && selectedOption !== null) {
         backgroundColor = correctColor;
       }
 

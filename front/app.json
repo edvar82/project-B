@@ -4,7 +4,7 @@
     "slug": "gabaritei",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/favicon3.png",
+    "icon": "./assets/icon.png",  
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
@@ -18,7 +18,7 @@
     ],
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/favicon3.png",
+        "foregroundImage": "./assets/icon.png",  
         "backgroundColor": "#FFFFFF"
       },
       "package": "com.seuusuario.meuapp",
