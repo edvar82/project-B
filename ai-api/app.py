@@ -77,9 +77,10 @@ def predict():
 
         acertos = 0
         if len(respostas_tratadas) == len(correct_answer):
-            gabarito_formatado = [f"{num+1}-{resp}" for num, resp in enumerate(correct_answer)]
+            print(respostas_tratadas)
+            print(correct_answer)
             for num, res in enumerate(respostas_tratadas):
-                if res == gabarito_formatado[num]:
+                if res == correct_answer[num]:
                     acertos += 1
 
         respostas_imagens.append({'respostas': respostas, 'acertos': acertos})
