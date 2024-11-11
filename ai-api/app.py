@@ -23,7 +23,7 @@ app = Flask(__name__)
 @app.route('/answer', methods=['POST']) # type: ignore
 def predict():
     correct_answer = json.loads(request.form['correct_answer'])
-    files = request.files.getlist('images')
+    files = request.files.getlist('images')  
 
     respostas_imagens = []
 
@@ -49,10 +49,10 @@ def predict():
 
         gabarito, bbox = exG.extrairMaiorCtn(imagem)
         imgGray = cv2.cvtColor(gabarito, cv2.COLOR_BGR2GRAY)
-        ret, imgTh = cv2.threshold(imgGray, 70, 255, cv2.THRESH_BINARY_INV)
+        ret, imgTh = cv2.threshold(imgGray, 100, 255, cv2.THRESH_BINARY_INV)
+
 
         cv2.rectangle(imagem, (bbox[0], bbox[1]), (bbox[0] + bbox[2], bbox[1] + bbox[3]), (0, 255, 0), 3)
-
         respostas = []
 
         for id, vg in enumerate(campos):
@@ -73,13 +73,13 @@ def predict():
             if percentual >= 15:
                 cv2.rectangle(gabarito, (x, y), (x + w, y + h), (255, 0, 0), 2)
                 respostas.append(resp[id])
-
         respostas_tratadas = tratar_respostas(respostas)
 
         acertos = 0
         if len(respostas_tratadas) == len(correct_answer):
+            gabarito_formatado = [f"{num+1}-{resp}" for num, resp in enumerate(correct_answer)]
             for num, res in enumerate(respostas_tratadas):
-                if res == correct_answer[num]:
+                if res == gabarito_formatado[num]:
                     acertos += 1
 
         respostas_imagens.append({'respostas': respostas, 'acertos': acertos})
