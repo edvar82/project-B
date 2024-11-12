@@ -77,8 +77,6 @@ def predict():
 
         acertos = 0
         if len(respostas_tratadas) == len(correct_answer):
-            print(respostas_tratadas)
-            print(correct_answer)
             for num, res in enumerate(respostas_tratadas):
                 if res == correct_answer[num]:
                     acertos += 1
