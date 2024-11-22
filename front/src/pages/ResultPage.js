@@ -35,7 +35,6 @@ export default function ResultPage({ route }) {
         console.error('Failed to fetch correct answers:', error);
       }
     };
-
     fetchCorrectAnswers();
   }, []);
 
@@ -55,27 +54,48 @@ export default function ResultPage({ route }) {
   const uploadImage = async (mode) => {
     try {
       let result = {};
-
       if (mode === 'gallery') {
         setModalVisible(false);
         await ImagePicker.requestMediaLibraryPermissionsAsync();
         result = await ImagePicker.launchImageLibraryAsync({
           mediaTypes: ImagePicker.MediaTypeOptions.Images,
           allowsMultipleSelection: true,
+          allowsEditing: true,
           aspect: [1, 1],
           quality: 1,
         });
       } else {
         setModalVisible(false);
         await ImagePicker.requestCameraPermissionsAsync();
-        result = await ImagePicker.launchCameraAsync({
-          cameraType: ImagePicker.CameraType.back,
-          allowsEditing: true,
-          aspect: [1, 1],
-          quality: 1,
-        });
+        let photos = [];
+        let keepTaking = true;
+        while (keepTaking) {
+          const photo = await ImagePicker.launchCameraAsync({
+            cameraType: ImagePicker.CameraType.back,
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 1,
+          });
+          if (!photo.canceled) {
+            photos.push(photo.assets[0]);
+            const takeAnother = await new Promise((resolve) => {
+              Alert.alert(
+                'Adicionar foto',
+                'Deseja tirar outra foto?',
+                [
+                  { text: 'Não', onPress: () => resolve(false) },
+                  { text: 'Sim', onPress: () => resolve(true) },
+                ],
+                { cancelable: false }
+              );
+            });
+            keepTaking = takeAnother;
+          } else {
+            keepTaking = false;
+          }
+        }
+        result = { canceled: photos.length === 0, assets: photos };
       }
-
       if (!result.canceled) {
         setLoading(true);
         const selectedImages = result.assets.map((asset) => asset.uri);
@@ -104,16 +124,14 @@ export default function ResultPage({ route }) {
     formData.append('correct_answer', JSON.stringify(formattedOptions));
 
     try {
-      const response = await fetch('https://project-b-h50c.onrender.com/answer', {
+      const response = await fetch('http://192.168.1.108:5000/answer', {
         method: 'POST',
         body: formData,
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
-
       setLoading(false);
-
       if (response.ok) {
         const resultData = await response.json();
         navigation.navigate('ResultPage', { resultData });
@@ -142,22 +160,13 @@ export default function ResultPage({ route }) {
             <View style={styles.textContainer}>
               <Text style={styles.title}>
                 Resultado da avaliação:
-                <Text
-                  style={{
-                    fontFamily: 'NunitoSans_400Regular',
-                    fontWeight: 'bold',
-                    color: '#395F6F',
-                  }}
-                ></Text>
+                <Text style={{ fontFamily: 'NunitoSans_400Regular', fontWeight: 'bold', color: '#395F6F' }}></Text>
               </Text>
             </View>
           </View>
           <View style={styles.resultContainer}>
             {resultData.resultados.map((resultado, index) => (
-              <View
-                key={index}
-                style={styles.resultItem}
-              >
+              <View key={index} style={styles.resultItem}>
                 <Text style={styles.resultItemText}>
                   Prova {index + 1}:{' '}
                   <Text style={styles.boldText}>{resultado.acertos} acertos</Text>
@@ -166,28 +175,20 @@ export default function ResultPage({ route }) {
             ))}
           </View>
           <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={styles.addButton}
-              onPress={handleAddImage}
-            >
+            <TouchableOpacity style={styles.addButton} onPress={handleAddImage}>
               <Text style={styles.addButtonLabel}>Enviar outra folha de respostas</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.goHomeButton}
-              onPress={handleGoHome}
-            >
+            <TouchableOpacity style={styles.goHomeButton} onPress={handleGoHome}>
               <Text style={styles.goHomeButtonLabel}>Voltar à tela inicial</Text>
             </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
-
       <Modal
         animationType="none"
         transparent={true}
         visible={modalVisible}
         onRequestClose={() => {
-          Alert.alert('Modal has been closed.');
           setModalVisible(!modalVisible);
         }}
       >
@@ -212,24 +213,15 @@ export default function ResultPage({ route }) {
               activeOpacity={0.8}
               onPress={toggleModal}
             >
-              <Text style={[styles.textButton, styles.textCancelButtonModal]}>
-                Cancelar
-              </Text>
+              <Text style={[styles.textButton, styles.textCancelButtonModal]}>Cancelar</Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
-
       {loading && (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator
-            size="large"
-            color="#0000ff"
-          />
-          <Image
-            source={loanding2}
-            style={styles.loadingImage}
-          />
+          <ActivityIndicator size="large" color="#0000ff" />
+          <Image source={loanding2} style={styles.loadingImage} />
         </View>
       )}
     </View>

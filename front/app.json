@@ -4,7 +4,7 @@
     "slug": "gabaritei",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",  
+    "icon": "./assets/icon.png",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
@@ -18,7 +18,7 @@
     ],
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/icon.png",  
+        "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#FFFFFF"
       },
       "package": "com.seuusuario.meuapp",
@@ -32,6 +32,17 @@
       "eas": {
         "projectId": "9776b1d3-9a75-4e86-aa08-eba106a37264"
       }
-    }
+    },
+    "plugins": [
+      "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app needs access to your photos to upload answer sheets.",
+          "cameraPermission": "The app needs access to your camera to take photos of answer sheets."
+        }
+      ]
+    ],
+    "newArchEnabled": true
   }
 }

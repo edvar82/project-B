@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify
 import cv2
 import pickle
 import os
@@ -8,35 +8,30 @@ from PIL import Image
 import numpy as np
 import extractTemplate as exG
 
-campos = []
 campos_path = os.path.join(os.path.dirname(__file__), 'pkl', 'campos.pkl')
 with open(campos_path, 'rb') as arquivo:
     campos = pickle.load(arquivo)
 
-resp = []
 resp_path = os.path.join(os.path.dirname(__file__), 'pkl', 'resp.pkl')
 with open(resp_path, 'rb') as arquivo:
     resp = pickle.load(arquivo)
 
 app = Flask(__name__)
 
-@app.route('/answer', methods=['POST']) # type: ignore
+@app.route('/answer', methods=['POST'])
 def predict():
     correct_answer = json.loads(request.form['correct_answer'])
     files = request.files.getlist('images')  
-
     respostas_imagens = []
 
     def tratar_respostas(respostas):
         questoes_dict = {str(i): 'F' for i in range(1, 11)}  
-        
         for resposta in respostas:
             numero_questao = resposta.split('-')[0]  
             if questoes_dict[numero_questao] != 'F': 
                 questoes_dict[numero_questao] = 'F'
             else:
                 questoes_dict[numero_questao] = resposta.split('-')[1]  
-        
         respostas_tratadas = [f"{num}-{resp}" for num, resp in sorted(questoes_dict.items(), key=lambda x: int(x[0]))]
         return respostas_tratadas
 
@@ -51,18 +46,12 @@ def predict():
         imgGray = cv2.cvtColor(gabarito, cv2.COLOR_BGR2GRAY)
         ret, imgTh = cv2.threshold(imgGray, 100, 255, cv2.THRESH_BINARY_INV)
 
-
-        cv2.rectangle(imagem, (bbox[0], bbox[1]), (bbox[0] + bbox[2], bbox[1] + bbox[3]), (0, 255, 0), 3)
         respostas = []
-
         for id, vg in enumerate(campos):
             x = int(vg[0])
             y = int(vg[1])
             w = int(vg[2])
             h = int(vg[3])
-
-            cv2.rectangle(gabarito, (x, y), (x + w, y + h), (0, 0, 255), 2)
-            cv2.rectangle(imgTh, (x, y), (x + w, y + h), (255, 255, 255), 1)
 
             campo = imgTh[y:y + h, x:x + w]
             height, width = campo.shape[:2]
@@ -70,8 +59,7 @@ def predict():
             pretos = cv2.countNonZero(campo)
             percentual = round((pretos / tamanho) * 100, 2)
 
-            if percentual >= 15:
-                cv2.rectangle(gabarito, (x, y), (x + w, y + h), (255, 0, 0), 2)
+            if percentual >= 25:
                 respostas.append(resp[id])
         respostas_tratadas = tratar_respostas(respostas)
 
@@ -82,6 +70,7 @@ def predict():
                     acertos += 1
 
         respostas_imagens.append({'respostas': respostas, 'acertos': acertos})
+
     return jsonify({'resultados': respostas_imagens})
 
 @app.route('/', methods=['GET'])
@@ -89,4 +78,4 @@ def index():
     return jsonify({'message': 'Hello, World!'})
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000)

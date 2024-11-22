@@ -58,11 +58,7 @@ export default function Home() {
 
   const handleSelectOption = (index, optionIndex) => {
     let updatedOptions = [...selectedOptions];
-    if (updatedOptions[index] === optionIndex) {
-      updatedOptions[index] = null;
-    } else {
-      updatedOptions[index] = optionIndex;
-    }
+    updatedOptions[index] = updatedOptions[index] === optionIndex ? null : optionIndex;
     setSelectedOptions(updatedOptions);
   };
 
@@ -82,12 +78,46 @@ export default function Home() {
       } else {
         setModalVisible(false);
         await ImagePicker.requestCameraPermissionsAsync();
-        result = await ImagePicker.launchCameraAsync({
-          cameraType: ImagePicker.CameraType.back,
-          allowsEditing: true,
-          aspect: [1, 1],
-          quality: 1,
-        });
+
+        // Take multiple photos
+        let photos = [];
+        let keepTaking = true;
+
+        while (keepTaking) {
+          const photo = await ImagePicker.launchCameraAsync({
+            cameraType: ImagePicker.CameraType.back,
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 1,
+          });
+
+          if (!photo.canceled) {
+            photos.push(photo.assets[0]);
+
+            // Ask if user wants to take another photo
+            const takeAnother = await new Promise((resolve) => {
+              Alert.alert(
+                'Adicionar foto',
+                'Deseja tirar outra foto?',
+                [
+                  { text: 'Não', onPress: () => resolve(false) },
+                  { text: 'Sim', onPress: () => resolve(true) },
+                ],
+                { cancelable: false }
+              );
+            });
+
+            keepTaking = takeAnother;
+          } else {
+            keepTaking = false;
+          }
+        }
+
+        // Format result to match gallery mode structure
+        result = {
+          canceled: photos.length === 0,
+          assets: photos,
+        };
       }
 
       if (!result.canceled) {
@@ -125,7 +155,7 @@ export default function Home() {
     formData.append('correct_answer', JSON.stringify(formattedOptions));
 
     try {
-      const response = await fetch('https://project-b-h50c.onrender.com/answer', {
+      const response = await fetch('http://192.168.1.108:5000/answer', {
         method: 'POST',
         body: formData,
         headers: {
@@ -188,7 +218,7 @@ export default function Home() {
                   emoji={null}
                   textColor="#395F6F"
                   onSelect={(optionIndex) => handleSelectOption(index, optionIndex)}
-                  initialSelectedOption={selectedOptions[index]} // Add this line
+                  initialSelectedOption={selectedOptions[index]}
                 />
               ))}
             </View>
