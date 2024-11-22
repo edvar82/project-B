@@ -155,7 +155,7 @@ export default function Home() {
     formData.append('correct_answer', JSON.stringify(formattedOptions));
 
     try {
-      const response = await fetch('http://192.168.1.108:5000/answer', {
+      const response = await fetch('https://project-b-oeux.onrender.com/answer', {
         method: 'POST',
         body: formData,
         headers: {
