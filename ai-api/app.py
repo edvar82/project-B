@@ -43,8 +43,10 @@ def predict():
         imagem = cv2.resize(image_np, (600, 700))
 
         gabarito, bbox = exG.extrairMaiorCtn(imagem)
+        cv2.imwrite('gabarito.jpg', gabarito)
         imgGray = cv2.cvtColor(gabarito, cv2.COLOR_BGR2GRAY)
         ret, imgTh = cv2.threshold(imgGray, 100, 255, cv2.THRESH_BINARY_INV)
+        cv2.imwrite('gabarito_th.jpg', imgTh)
 
         respostas = []
         for id, vg in enumerate(campos):
@@ -59,11 +61,17 @@ def predict():
             pretos = cv2.countNonZero(campo)
             percentual = round((pretos / tamanho) * 100, 2)
 
+            # Marcar o campo na imagem
+            cv2.rectangle(gabarito, (x, y), (x + w, y + h), (0, 255, 0), 2)
+
             if percentual >= 25:
                 respostas.append(resp[id])
         respostas_tratadas = tratar_respostas(respostas)
 
+        cv2.imwrite('gabarito_campo.jpg', gabarito)
+
         acertos = 0
+        print(respostas_tratadas)
         if len(respostas_tratadas) == len(correct_answer):
             for num, res in enumerate(respostas_tratadas):
                 if res == correct_answer[num]:
@@ -78,4 +86,4 @@ def index():
     return jsonify({'message': 'Hello, World!'})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000, debug=True)
