@@ -22,6 +22,7 @@ app = Flask(__name__)
 def predict():
     correct_answer = json.loads(request.form['correct_answer'])
     files = request.files.getlist('images')  
+
     respostas_imagens = []
 
     def tratar_respostas(respostas):
@@ -43,10 +44,21 @@ def predict():
         imagem = cv2.resize(image_np, (600, 700))
 
         gabarito, bbox = exG.extrairMaiorCtn(imagem)
-        cv2.imwrite('gabarito.jpg', gabarito)
+
+        # Conversão para escala de cinza
         imgGray = cv2.cvtColor(gabarito, cv2.COLOR_BGR2GRAY)
-        ret, imgTh = cv2.threshold(imgGray, 100, 255, cv2.THRESH_BINARY_INV)
-        cv2.imwrite('gabarito_th.jpg', imgTh)
+
+        # Aplicação de desfoque para remover ruídos e sombras pequenas
+        imgBlur = cv2.GaussianBlur(imgGray, (5, 5), 0)
+
+        # Aplicação de Adaptive Threshold para lidar com variações de iluminação
+        imgTh = cv2.adaptiveThreshold(imgBlur, 255, cv2.ADAPTIVE_THRESH_MEAN_C, 
+                                      cv2.THRESH_BINARY_INV, 11, 2)
+
+        # Operação morfológica de fechamento para remover pequenos ruídos
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+        imgTh = cv2.morphologyEx(imgTh, cv2.MORPH_CLOSE, kernel)
+
 
         respostas = []
         for id, vg in enumerate(campos):
@@ -64,14 +76,13 @@ def predict():
             # Marcar o campo na imagem
             cv2.rectangle(gabarito, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
-            if percentual >= 25:
+            if percentual >= 45:
                 respostas.append(resp[id])
+        print("Respostas: ", respostas)
         respostas_tratadas = tratar_respostas(respostas)
 
-        cv2.imwrite('gabarito_campo.jpg', gabarito)
-
         acertos = 0
-        print(respostas_tratadas)
+        print("Respostas tratadas: ", respostas_tratadas)
         if len(respostas_tratadas) == len(correct_answer):
             for num, res in enumerate(respostas_tratadas):
                 if res == correct_answer[num]:
@@ -86,4 +97,4 @@ def index():
     return jsonify({'message': 'Hello, World!'})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='192.168.1.104', port=5000, debug=True)

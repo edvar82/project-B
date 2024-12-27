@@ -14,6 +14,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import loanding2 from '../assets/loanding2.png';
 import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 
 export default function ResultPage({ route }) {
   const { resultData } = route.params;
@@ -60,10 +61,22 @@ export default function ResultPage({ route }) {
         result = await ImagePicker.launchImageLibraryAsync({
           mediaTypes: ImagePicker.MediaTypeOptions.Images,
           allowsMultipleSelection: true,
-          allowsEditing: true,
           aspect: [1, 1],
           quality: 1,
         });
+
+        if (!result.canceled) {
+          result.assets = await Promise.all(
+            result.assets.map(async (asset) => {
+              const manipulatedImage = await ImageManipulator.manipulateAsync(
+                asset.uri,
+                [{ rotate: 0 }], 
+                { format: ImageManipulator.SaveFormat.JPEG } 
+              );
+              return { ...asset, uri: manipulatedImage.uri };
+            })
+          );
+        }
       } else {
         setModalVisible(false);
         await ImagePicker.requestCameraPermissionsAsync();
@@ -160,13 +173,22 @@ export default function ResultPage({ route }) {
             <View style={styles.textContainer}>
               <Text style={styles.title}>
                 Resultado da avaliação:
-                <Text style={{ fontFamily: 'NunitoSans_400Regular', fontWeight: 'bold', color: '#395F6F' }}></Text>
+                <Text
+                  style={{
+                    fontFamily: 'NunitoSans_400Regular',
+                    fontWeight: 'bold',
+                    color: '#395F6F',
+                  }}
+                ></Text>
               </Text>
             </View>
           </View>
           <View style={styles.resultContainer}>
             {resultData.resultados.map((resultado, index) => (
-              <View key={index} style={styles.resultItem}>
+              <View
+                key={index}
+                style={styles.resultItem}
+              >
                 <Text style={styles.resultItemText}>
                   Prova {index + 1}:{' '}
                   <Text style={styles.boldText}>{resultado.acertos} acertos</Text>
@@ -175,10 +197,16 @@ export default function ResultPage({ route }) {
             ))}
           </View>
           <View style={styles.buttonContainer}>
-            <TouchableOpacity style={styles.addButton} onPress={handleAddImage}>
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={handleAddImage}
+            >
               <Text style={styles.addButtonLabel}>Enviar outra folha de respostas</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.goHomeButton} onPress={handleGoHome}>
+            <TouchableOpacity
+              style={styles.goHomeButton}
+              onPress={handleGoHome}
+            >
               <Text style={styles.goHomeButtonLabel}>Voltar à tela inicial</Text>
             </TouchableOpacity>
           </View>
@@ -213,15 +241,23 @@ export default function ResultPage({ route }) {
               activeOpacity={0.8}
               onPress={toggleModal}
             >
-              <Text style={[styles.textButton, styles.textCancelButtonModal]}>Cancelar</Text>
+              <Text style={[styles.textButton, styles.textCancelButtonModal]}>
+                Cancelar
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
       {loading && (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#0000ff" />
-          <Image source={loanding2} style={styles.loadingImage} />
+          <ActivityIndicator
+            size="large"
+            color="#0000ff"
+          />
+          <Image
+            source={loanding2}
+            style={styles.loadingImage}
+          />
         </View>
       )}
     </View>

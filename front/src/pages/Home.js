@@ -21,6 +21,7 @@ import loanding2 from '../assets/loanding2.png';
 import { useFonts, NunitoSans_400Regular } from '@expo-google-fonts/nunito-sans';
 
 import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 
 export default function Home() {
   let [fontsLoaded] = useFonts({ NunitoSans_400Regular });
@@ -65,7 +66,6 @@ export default function Home() {
   const uploadImage = async (mode) => {
     try {
       let result = {};
-
       if (mode === 'gallery') {
         setModalVisible(false);
         await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -75,14 +75,24 @@ export default function Home() {
           aspect: [1, 1],
           quality: 1,
         });
+
+        if (!result.canceled) {
+          result.assets = await Promise.all(
+            result.assets.map(async (asset) => {
+              const manipulatedImage = await ImageManipulator.manipulateAsync(
+                asset.uri,
+                [{ rotate: 0 }],
+                { format: ImageManipulator.SaveFormat.JPEG }
+              );
+              return { ...asset, uri: manipulatedImage.uri };
+            })
+          );
+        }
       } else {
         setModalVisible(false);
         await ImagePicker.requestCameraPermissionsAsync();
-
-        // Take multiple photos
         let photos = [];
         let keepTaking = true;
-
         while (keepTaking) {
           const photo = await ImagePicker.launchCameraAsync({
             cameraType: ImagePicker.CameraType.back,
@@ -90,11 +100,8 @@ export default function Home() {
             aspect: [1, 1],
             quality: 1,
           });
-
           if (!photo.canceled) {
             photos.push(photo.assets[0]);
-
-            // Ask if user wants to take another photo
             const takeAnother = await new Promise((resolve) => {
               Alert.alert(
                 'Adicionar foto',
@@ -106,20 +113,13 @@ export default function Home() {
                 { cancelable: false }
               );
             });
-
             keepTaking = takeAnother;
           } else {
             keepTaking = false;
           }
         }
-
-        // Format result to match gallery mode structure
-        result = {
-          canceled: photos.length === 0,
-          assets: photos,
-        };
+        result = { canceled: photos.length === 0, assets: photos };
       }
-
       if (!result.canceled) {
         setLoading(true);
         const selectedImages = result.assets.map((asset) => asset.uri);
